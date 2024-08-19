@@ -1,0 +1,85 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // provider = "postgresql"
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  uid             String            @id @unique @default(uuid())
+  name            String
+  store_name      String
+  email           String            @unique
+  password        String
+  isAdmin         Boolean?          @default(false)
+  image           String?
+  createdAt       DateTime?
+  product         Product[]
+  productCategory ProductCategory[]
+  transaction     Transaction[]
+  pelanggan       Pelanggan[]
+}
+
+model Product {
+  uid                String               @id @unique @default(uuid())
+  name               String
+  price              Int
+  stock              Int
+  image              String?
+  deletedAt          DateTime?
+  category           ProductCategory      @relation(fields: [categoryId], references: [uid]) // Assuming a "ProductCategory" model exists
+  categoryId         String
+  user               User                 @relation(fields: [userId], references: [uid]) // Assuming a "ProductCategory" model exists
+  userId             String
+  productTransaction ProductTransaction[]
+}
+
+model ProductCategory {
+  uid      String    @id @unique @default(uuid())
+  name     String
+  user     User      @relation(fields: [UserId], references: [uid])
+  UserId   String
+  products Product[]
+}
+
+model Transaction {
+  uid                String               @id @unique @default(uuid())
+  user               User                 @relation(fields: [userId], references: [uid])
+  userId             String
+  pelangganId        String?
+  total_quantity     Int
+  total_price        Int
+  pelanggan          Pelanggan?            @relation(fields: [pelangganId], references: [uid])
+  createdAt          DateTime             @default(now())
+  productTransaction ProductTransaction[]
+}
+
+model ProductTransaction {
+  quantity      Int
+  product       Product     @relation(fields: [productId], references: [uid])
+  productId     String
+  productPrice  Int
+  transaction   Transaction @relation(fields: [transactionId], references: [uid])
+  transactionId String
+  createdAt     DateTime    @default(now())
+
+  @@id([productId, transactionId])
+}
+
+model Pelanggan {
+  uid         String        @id @unique @default(uuid())
+  name        String
+  phoneNumber String
+  userId      String
+  user        User          @relation(fields: [userId], references: [uid])
+  transaction Transaction[]
+}
